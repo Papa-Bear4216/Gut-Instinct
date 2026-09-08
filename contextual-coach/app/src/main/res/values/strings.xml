@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SecondGuess</string>
+    <string name="accessibility_service_description">SecondGuess observes app transitions. After blocking sensitive apps, it may temporarily process visible text on-device with Gemini Nano to describe a repeated workflow. Raw text is never saved or uploaded.</string>
+</resources>

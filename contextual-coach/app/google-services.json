@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "222960387073",
+    "project_id": "registry-app-prod-7a07c",
+    "storage_bucket": "registry-app-prod-7a07c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222960387073:android:e10c0ee7eb03aaa5ecec00",
+        "android_client_info": {
+          "package_name": "com.registry.coach"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVpRse0IkR8Tk_yyMz3w1SXmLnxEUeF-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222960387073:android:4392d910baed069cecec00",
+        "android_client_info": {
+          "package_name": "com.registry.usagecollector"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVpRse0IkR8Tk_yyMz3w1SXmLnxEUeF-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222960387073:android:7584e054209cdc75ecec00",
+        "android_client_info": {
+          "package_name": "com.secondguess.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVpRse0IkR8Tk_yyMz3w1SXmLnxEUeF-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

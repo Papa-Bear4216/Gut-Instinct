@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function ownsExisting() { return signedIn() && resource.data.createdBy == request.auth.uid; }
+    function ownsIncoming() { return signedIn() && request.resource.data.createdBy == request.auth.uid; }
+
+    match /workflowSuggestions/{id} {
+      allow create: if ownsIncoming();
+      allow read, delete: if ownsExisting();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+    match /workflows/{id} {
+      allow create: if ownsIncoming();
+      allow read, delete: if ownsExisting();
+      allow update: if ownsExisting() && ownsIncoming();
+    }
+    match /workflowRuns/{id} {
+      allow create: if ownsIncoming()
+        && request.resource.data.keys().hasOnly(['createdBy','workflowId','success','executedAt','actionCount']);
+      allow read, delete: if ownsExisting();
+      allow update: if false;
+    }
+  }
+}

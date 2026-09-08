@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gut-Instinct Automation Schema",
+  "description": "Schema defining the structure of automations for on-device ML triggers",
+  "definitions": {
+    "Trigger": {
+      "oneOf": [
+        {
+          "title": "AppTransitionTrigger",
+          "description": "Trigger based on transition between two apps",
+          "required": ["type", "fromPackage", "toPackage", "minCount", "maxGapMs"],
+          "properties": {
+            "type": { "enum": ["app_transition"] },
+            "fromPackage": { "type": "string" },
+            "toPackage": { "type": "string" },
+            "minCount": { "type": "integer", "minimum": 1 },
+            "maxGapMs": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "title": "MlModelTrigger",
+          "description": "Trigger based on output of an on-device ML model",
+          "required": ["type", "modelName", "outputKey", "threshold", "comparison"],
+          "properties": {
+            "type": { "enum": ["ml_model"] },
+            "modelName": { "type": "string" },
+            "outputKey": { "type": "string" },
+            "threshold": { "type": "number" },
+            "comparison": { "enum": ["gt", "gte", "lt", "lte", "eq"] }
+          }
+        },
+        {
+          "title": "TimeTrigger",
+          "description": "Trigger based on time of day or interval",
+          "required": ["type", "schedule"],
+          "properties": {
+            "type": { "enum": ["time"] },
+            "schedule": {
+              "oneOf": [
+                {
+                  "title": "TimeOfDay",
+                  "description": "Trigger at specific time(s) of day",
+                  "required": ["times"],
+                  "properties": {
+                    "times": {
+                      "type": "array",
+                      "items": { "type": "string", "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$" }
+                    }
+                  }
+                },
+                {
+                  "title": "Interval",
+                  "description": "Trigger every N minutes/hours",
+                  "required": ["everyMs"],
+                  "properties": {
+                    "everyMs": { "type": "integer", "minimum": 1000 }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "Action": {
+      "oneOf": [
+        {
+          "title": "LaunchAppAction",
+          "required": ["type", "package"],
+          "properties": {
+            "type": { "enum": ["launch_app"] },
+            "package": { "type": "string" }
+          }
+        },
+        {
+          "title": "OpenUrlAction",
+          "required": ["type", "url"],
+          "properties": {
+            "type": { "enum": ["open_url"] },
+            "url": { "type": "string", "format": "uri" }
+          }
+        },
+        {
+          "title": "CopyTextAction",
+          "required": ["type", "text"],
+          "properties": {
+            "type": { "enum": ["copy_text"] },
+            "text": { "type": "string" }
+          }
+        },
+        {
+          "title": "ShowNotificationAction",
+          "required": ["type", "title", "message"],
+          "properties": {
+            "type": { "enum": ["show_notification"] },
+            "title": { "type": "string" },
+            "message": { "type": "string" }
+          }
+        },
+        {
+          "title": "RunScriptAction",
+          "description": "Run a custom script (for advanced use cases)",
+          "required": ["type", "script"],
+          "properties": {
+            "type": { "enum": ["run_script"] },
+            "script": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "SafetyGate": {
+      "oneOf": [
+        {
+          "title": "TimeWindowGate",
+          "description": "Only allow during certain time windows",
+          "required": ["type", "startTime", "endTime"],
+          "properties": {
+            "type": { "enum": ["time_window"] },
+            "startTime": { "type": "string", "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$" },
+            "endTime": { "type": "string", "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$" }
+          }
+        },
+        {
+          "title": "BatteryLevelGate",
+          "description": "Only allow if battery level is above threshold",
+          "required": ["type", "minLevel"],
+          "properties": {
+            "type": { "enum": ["battery_level"] },
+            "minLevel": { "type": "integer", "minimum": 0, "maximum": 100 }
+          }
+        },
+        {
+          "title": "ScreenOnGate",
+          "description": "Only allow if screen is on",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["screen_on"] }
+          }
+        },
+        {
+          "title": "UserPresentGate",
+          "description": "Only allow if user is present (device unlocked)",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["user_present"] }
+          }
+        },
+        {
+          "title": "CustomMLGate",
+          "description": "Allow based on custom ML model output",
+          "required": ["type", "modelName", "outputKey", "threshold", "comparison"],
+          "properties": {
+            "type": { "enum": ["custom_ml"] },
+            "modelName": { "type": "string" },
+            "outputKey": { "type": "string" },
+            "threshold": { "type": "number" },
+            "comparison": { "enum": ["gt", "gte", "lt", "lte", "eq"] }
+          }
+        }
+      ]
+    },
+    "Automation": {
+      "title": "Automation",
+      "required": ["id", "trigger", "actions"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "trigger": { "$ref": "#/definitions/Trigger" },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Action" },
+          "minItems": 1
+        },
+        "safetyGates": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SafetyGate" },
+          "default": []
+        },
+        "cooldownMs": { "type": "integer", "minimum": 0, "default": 30000 },
+        "enabled": { "type": "boolean", "default": true },
+        "createdAt": { "type": "integer" },
+        "modifiedAt": { "type": "integer" }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [ { "$ref": "#/definitions/Automation" } ]
+}

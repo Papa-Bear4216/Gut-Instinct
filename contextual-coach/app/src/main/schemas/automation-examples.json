@@ -1,0 +1,92 @@
+[
+  {
+    "id": "workflow_launcher_001",
+    "name": "Launch LinkedIn after checking email",
+    "description": "When transitioning from Gmail to LinkedIn at least 3 times within 90 seconds, automatically launch LinkedIn",
+    "trigger": {
+      "type": "app_transition",
+      "fromPackage": "com.google.android.gm",
+      "toPackage": "com.linkedin.android",
+      "minCount": 3,
+      "maxGapMs": 90000
+    },
+    "actions": [
+      {
+        "type": "launch_app",
+        "package": "com.linkedin.android"
+      }
+    ],
+    "safetyGates": [
+      {
+        "type": "time_window",
+        "startTime": "09:00",
+        "endTime": "17:00"
+      }
+    ],
+    "cooldownMs": 30000,
+    "enabled": true,
+    "createdAt": 1725676800000,
+    "modifiedAt": 1725676800000
+  },
+  {
+    "id": "activity_notification_001",
+    "name": "Remind to stretch after running",
+    "description": "When activity detection model confirms running with high confidence, show a notification to stretch",
+    "trigger": {
+      "type": "ml_model",
+      "modelName": "activity_classifier",
+      "outputKey": "running_confidence",
+      "threshold": 0.8,
+      "comparison": "gt"
+    },
+    "actions": [
+      {
+        "type": "show_notification",
+        "title": "Time to stretch",
+        "message": "You've been running for a while. Consider taking a moment to stretch."
+      }
+    ],
+    "safetyGates": [
+      {
+        "type": "battery_level",
+        "minLevel": 20
+      },
+      {
+        "type": "user_present"
+      }
+    ],
+    "cooldownMs": 300000,
+    "enabled": true,
+    "createdAt": 1725676800000,
+    "modifiedAt": 1725676800000
+  },
+  {
+    "id": "pattern_to_automation_example",
+    "name": "Example: PatternEngine Pattern to Automation",
+    "description": "Shows how a PatternEngine Pattern maps directly to an AppTransitionTrigger",
+    "patternEngineOutput": {
+      "fromPackage": "com.whatsapp",
+      "toPackage": "com.google.android.youtube",
+      "count": 5,
+      "medianGapMs": 45000
+    },
+    "equivalentAutomationTrigger": {
+      "type": "app_transition",
+      "fromPackage": "com.whatsapp",
+      "toPackage": "com.google.android.youtube",
+      "minCount": 5,
+      "maxGapMs": 45000
+    },
+    "actions": [
+      {
+        "type": "launch_app",
+        "package": "com.google.android.youtube"
+      }
+    ],
+    "safetyGates": [],
+    "cooldownMs": 30000,
+    "enabled": true,
+    "createdAt": 1725676800000,
+    "modifiedAt": 1725676800000
+  }
+]
