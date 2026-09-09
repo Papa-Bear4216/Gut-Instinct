@@ -27,6 +27,8 @@ class WorkflowStore(context: Context) {
             title=suggestion.title, evidenceCount=suggestion.evidenceCount,
             estimatedSecondsSaved=suggestion.estimatedSecondsSaved, approvedAt=System.currentTimeMillis(),
             actions=suggestion.actions,
+            patternType=suggestion.patternType,
+            chainPackages=suggestion.chainPackages,
         )
         preferences.edit()
             .putString("suggestions", json.encodeToString(suggestions().filterNot { it.id == id }))

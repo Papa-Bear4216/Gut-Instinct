@@ -66,17 +66,30 @@ fun SuggestionCard(
                 .padding(20.dp)
         ) {
             // Header chips: Routine Suggestion, Observed count, Confidence
+            val categoryBadge = when (item.patternType) {
+                "thrashing" -> "FRICTION LOOP"
+                "chain" -> "3-STEP CHAIN"
+                "habit" -> "HABITUAL ROUTINE"
+                else -> "ROUTINE SUGGESTION"
+            }
+            val badgeColor = when (item.patternType) {
+                "thrashing" -> Color(0xFFFFB74D)
+                "chain" -> AccentEmerald
+                "habit" -> AccentPurple
+                else -> AccentPurple
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "ROUTINE SUGGESTION",
+                    text = categoryBadge,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.2.sp,
-                    color = AccentPurple
+                    color = badgeColor
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(
@@ -130,66 +143,175 @@ fun SuggestionCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Flow: App A Icon + Name -> App B Icon + Name
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF141223))
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
+            // Flow visualization: Chain (3 apps), Thrashing (bidirectional pair), or Sequential/Habit (2 apps)
+            if (item.patternType == "chain" && item.chainPackages.size >= 3) {
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF141223))
+                        .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    AppIconView(packageName = item.fromPackage, size = 38.dp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = fromLabel,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextLight,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = "Trigger app",
-                            fontSize = 10.sp,
-                            color = MutedText
-                        )
+                    item.chainPackages.forEachIndexed { idx, pkg ->
+                        val label = getAppLabel(context, pkg)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            AppIconView(packageName = pkg, size = 32.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextLight,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "Step ${idx + 1}",
+                                    fontSize = 9.sp,
+                                    color = MutedText
+                                )
+                            }
+                        }
+                        if (idx < item.chainPackages.size - 1) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowForward,
+                                contentDescription = "Then",
+                                tint = AccentPurple,
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .size(14.dp)
+                            )
+                        }
                     }
                 }
-
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "To",
-                    tint = AccentPurple,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .size(18.dp)
-                )
-
+            } else if (item.patternType == "thrashing") {
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF141223))
+                        .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    AppIconView(packageName = item.toPackage, size = 38.dp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = toLabel,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextLight,
-                            maxLines = 1
-                        )
-                        Text(
-                            text = "Next action",
-                            fontSize = 10.sp,
-                            color = MutedText
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        AppIconView(packageName = item.fromPackage, size = 38.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = fromLabel,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextLight,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Split Top / Left",
+                                fontSize = 10.sp,
+                                color = MutedText
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "⇄",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFB74D),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        AppIconView(packageName = item.toPackage, size = 38.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = toLabel,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextLight,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Split Bottom / Right",
+                                fontSize = 10.sp,
+                                color = MutedText
+                            )
+                        }
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFF141223))
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        AppIconView(packageName = item.fromPackage, size = 38.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = fromLabel,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextLight,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Trigger app",
+                                fontSize = 10.sp,
+                                color = MutedText
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "To",
+                        tint = AccentPurple,
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .size(18.dp)
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        AppIconView(packageName = item.toPackage, size = 38.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = toLabel,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextLight,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Next action",
+                                fontSize = 10.sp,
+                                color = MutedText
+                            )
+                        }
                     }
                 }
             }
@@ -218,6 +340,12 @@ fun SuggestionCard(
                     Text("Dismiss", fontSize = 13.sp)
                 }
 
+                val approveText = when (item.patternType) {
+                    "thrashing" -> "Approve Pair"
+                    "chain" -> "Approve Chain"
+                    else -> "Approve Routine"
+                }
+
                 Button(
                     onClick = onApprove,
                     shape = RoundedCornerShape(14.dp),
@@ -231,7 +359,7 @@ fun SuggestionCard(
                         tint = Color.White
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Approve Routine", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(approveText, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

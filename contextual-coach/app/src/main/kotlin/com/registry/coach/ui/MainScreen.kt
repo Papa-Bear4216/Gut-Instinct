@@ -148,7 +148,7 @@ fun MainScreen(
                 EmptyStateCard(
                     title = "Observing Patterns",
                     message = if (isAccessibilityEnabled)
-                        "Continue using your apps normally. SecondGuess suggests an automation shortcut once you repeat a transition 3 times within 90 seconds."
+                        "Continue using your apps normally. SecondGuess observes your app transitions, multitasking loops, and daily routines, suggesting shortcuts once a pattern repeats at least 3 times."
                     else
                         "Enable observation above to let SecondGuess learn your common app transitions."
                 )

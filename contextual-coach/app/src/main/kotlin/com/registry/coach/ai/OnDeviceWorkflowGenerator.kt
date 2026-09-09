@@ -9,9 +9,15 @@ class OnDeviceWorkflowGenerator {
     suspend fun enrich(base:WorkflowSuggestion,pattern:PatternEngine.Pattern,ephemeralContext:String):WorkflowSuggestion {
         if(ephemeralContext.isBlank()) return base
         return try {
+            val chainDesc = if (pattern.chainPackages.size >= 3) {
+                pattern.chainPackages.joinToString(" -> ")
+            } else {
+                "${pattern.fromPackage} -> ${pattern.toPackage}"
+            }
             val prompt="""
                 You are naming an Android shortcut from verified observations. Do not invent apps, steps, facts, or capabilities.
-                Verified transition: ${pattern.fromPackage} -> ${pattern.toPackage}
+                Pattern type: ${pattern.kind.name.lowercase()}
+                Verified transition: $chainDesc
                 Frequency: ${pattern.count}
                 Ephemeral visible context: ${ephemeralContext.take(1200)}
                 Return exactly two plain-text lines:

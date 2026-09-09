@@ -23,6 +23,8 @@ data class WorkflowSuggestion(
     val reason: String = "Repeated workflow observed",
     val generatedBy: String = "deterministic",
     val actions: List<WorkflowAction> = emptyList(),
+    val patternType: String = "sequential",
+    val chainPackages: List<String> = emptyList(),
 )
 
 @Serializable
@@ -49,4 +51,6 @@ data class NativeWorkflow(
     val actions: List<WorkflowAction> = emptyList(),
     val cooldownMs: Long = 30_000,
     val lastRunAt: Long = 0,
+    val patternType: String = "sequential",
+    val chainPackages: List<String> = emptyList(),
 )

@@ -20,7 +20,7 @@ class WorkflowExecutor(private val context:Context) {
             for(action in actions) {
                 if(action.delayMs>0) delay(action.delayMs)
                 val success=when(action.type) {
-                    "launch_app" -> launch(action.params["package"].orEmpty())
+                    "launch_app" -> launch(action.params["package"].orEmpty(), action.params["mode"].orEmpty())
                     "open_url" -> openUrl(action.params["url"].orEmpty())
                     "copy_text" -> copy(action.params["text"].orEmpty())
                     "show_notification" -> notify(action.params["title"].orEmpty(),action.params["message"].orEmpty())
@@ -31,7 +31,19 @@ class WorkflowExecutor(private val context:Context) {
             true
         }
     } catch (_:Exception) { false }
-    private fun launch(packageName:String)=try { context.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));true } catch (_:Exception){false}
+    private fun launch(packageName:String, mode:String = ""): Boolean = try {
+        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+            ?: Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+                setPackage(packageName)
+            }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if(mode == "adjacent") {
+            intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        }
+        context.startActivity(intent)
+        true
+    } catch (_:Exception){false}
     private fun openUrl(url:String)=try { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));true } catch (_:Exception){false}
     private fun copy(text:String):Boolean { (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("SecondGuess",text));return true }
     private fun notify(title:String,message:String):Boolean { val manager=context.getSystemService(NotificationManager::class.java);if(Build.VERSION.SDK_INT>=26)manager.createNotificationChannel(NotificationChannel("workflows","Workflow execution",NotificationManager.IMPORTANCE_DEFAULT));manager.notify((System.currentTimeMillis()%Int.MAX_VALUE).toInt(),NotificationCompat.Builder(context,"workflows").setSmallIcon(android.R.drawable.ic_menu_info_details).setContentTitle(title.ifBlank { "SecondGuess" }).setContentText(message).build());return true }

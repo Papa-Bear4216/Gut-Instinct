@@ -26,20 +26,24 @@ class AccessibilityMonitor : AccessibilityService() {
     private val generator=OnDeviceWorkflowGenerator()
     private val json=Json
     private val events=ArrayDeque<PatternEngine.Event>()
+    private val transitions=ArrayDeque<PatternEngine.TransitionRecord>()
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
     private val processed=mutableSetOf<String>()
     private var ephemeralSelection=""
 
     override fun onServiceConnected() {
         store=WorkflowStore(applicationContext);guard=ContextGuard(applicationContext);sync=FirebaseWorkflowSync(applicationContext);executor=WorkflowExecutor(applicationContext)
-        val saved=getSharedPreferences("secondguess_observer",MODE_PRIVATE).getString("events","[]") ?: "[]"
+        val prefs=getSharedPreferences("secondguess_observer",MODE_PRIVATE)
+        val saved=prefs.getString("events","[]") ?: "[]"
         try { events.addAll(json.decodeFromString<List<PatternEngine.Event>>(saved)) } catch (_:Exception) { }
+        val savedTransitions=prefs.getString("transitions","[]") ?: "[]"
+        try { transitions.addAll(json.decodeFromString<List<PatternEngine.TransitionRecord>>(savedTransitions)) } catch (_:Exception) { }
     }
 
     override fun onAccessibilityEvent(event:AccessibilityEvent) {
         val packageName=event.packageName?.toString() ?: return
-        // Mandatory pre-filter: no accessibility tree access is permitted before this returns false.
-        if(packageName==applicationContext.packageName || guard.isBlocked(packageName)) return
+        // Mandatory pre-filter: sensitive apps, self, and trampoline/noise packages (launchers, system UI, keyboards) are filtered before any tree access.
+        if(packageName==applicationContext.packageName || guard.isBlocked(packageName) || engine.isTrampolineOrNoise(packageName)) return
         if(event.eventType==AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED) {
             if(!store.screenContextEnabled()) return
             // In-memory hint only. It is consumed on the next allowed transition and never persisted or synced.
@@ -51,15 +55,27 @@ class AccessibilityMonitor : AccessibilityService() {
         store.workflows().filter { it.enabled && it.fromPackage==packageName && now-it.lastRunAt>=it.cooldownMs }.forEach { workflow ->
             scope.launch { val success=executor.execute(workflow);store.recordRun(workflow.id,success);val updated=store.workflows().firstOrNull { it.id==workflow.id } ?: workflow;sync.workflow(updated);sync.execution(updated,success) }
         }
-        events.addLast(PatternEngine.Event(packageName,now))
-        while(events.size>200) events.removeFirst()
-        val snapshot=events.toList()
-        scope.launch(Dispatchers.IO) {
-            getSharedPreferences("secondguess_observer",MODE_PRIVATE).edit().putString("events",json.encodeToString(snapshot)).apply()
+        val lastEvent=events.lastOrNull()
+        if(lastEvent!=null && lastEvent.packageName!=packageName) {
+            val gap=now-lastEvent.occurredAt
+            if(gap in 0..PatternEngine.MAX_GAP_MS && !guard.isBlocked(lastEvent.packageName)) {
+                transitions.addLast(PatternEngine.TransitionRecord(lastEvent.packageName,packageName,now,gap))
+                while(transitions.size>1000) transitions.removeFirst()
+            }
         }
-        engine.detect(events.toList()).forEach { pattern ->
+        events.addLast(PatternEngine.Event(packageName,now))
+        while(events.size>300) events.removeFirst()
+        val snapshotEvents=events.toList()
+        val snapshotTransitions=transitions.toList()
+        scope.launch(Dispatchers.IO) {
+            getSharedPreferences("secondguess_observer",MODE_PRIVATE).edit()
+                .putString("events",json.encodeToString(snapshotEvents))
+                .putString("transitions",json.encodeToString(snapshotTransitions))
+                .apply()
+        }
+        engine.detect(snapshotEvents,snapshotTransitions).forEach { pattern ->
             val base=engine.suggestion(pattern)
-            if(base.id in processed || store.rejectedIds().contains(base.id) || store.workflows().any { it.id==base.id }) return@forEach
+            if(base.id in processed || store.rejectedIds().contains(base.id) || store.workflows().any { it.id==base.id } || store.suggestions().any { it.id==base.id }) return@forEach
             processed.add(base.id)
             // Screen context is extracted only after filtering, capped, passed to AICore, then discarded.
             val ephemeral=if(store.screenContextEnabled()) (ephemeralSelection+" "+extractVisibleContext(rootInActiveWindow)).trim().take(1500) else ""
