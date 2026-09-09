@@ -55,8 +55,10 @@ import com.registry.coach.ui.theme.TextLight
 fun ObservationHero(
     isAccessibilityEnabled: Boolean,
     isScreenContextEnabled: Boolean,
+    isPiecesSyncEnabled: Boolean = true,
     onToggleAccessibility: () -> Unit,
     onToggleScreenContext: (Boolean) -> Unit,
+    onTogglePiecesSync: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -243,6 +245,56 @@ fun ObservationHero(
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = PrimaryPurple,
+                        uncheckedThumbColor = MutedText,
+                        uncheckedTrackColor = Color(0xFF2C274B)
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // PiecesOS workstream sync toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFF1A172F))
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = AccentEmerald,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "PiecesOS Workstream Sync",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextLight
+                        )
+                        Text(
+                            text = "Stream activity context to port 8787",
+                            fontSize = 11.sp,
+                            color = MutedText
+                        )
+                    }
+                }
+
+                Switch(
+                    checked = isPiecesSyncEnabled,
+                    onCheckedChange = onTogglePiecesSync,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = AccentEmerald,
                         uncheckedThumbColor = MutedText,
                         uncheckedTrackColor = Color(0xFF2C274B)
                     )

@@ -57,10 +57,12 @@ import com.registry.coach.ui.theme.TextLight
 fun MainScreen(
     isAccessibilityEnabled: Boolean,
     isScreenContextEnabled: Boolean,
+    isPiecesSyncEnabled: Boolean = true,
     suggestions: List<WorkflowSuggestion>,
     workflows: List<NativeWorkflow>,
     onToggleAccessibility: () -> Unit,
     onToggleScreenContext: (Boolean) -> Unit,
+    onTogglePiecesSync: (Boolean) -> Unit = {},
     onApproveSuggestion: (String) -> Unit,
     onRejectSuggestion: (String) -> Unit,
     onToggleWorkflow: (String, Boolean) -> Unit,
@@ -130,8 +132,10 @@ fun MainScreen(
             ObservationHero(
                 isAccessibilityEnabled = isAccessibilityEnabled,
                 isScreenContextEnabled = isScreenContextEnabled,
+                isPiecesSyncEnabled = isPiecesSyncEnabled,
                 onToggleAccessibility = onToggleAccessibility,
-                onToggleScreenContext = onToggleScreenContext
+                onToggleScreenContext = onToggleScreenContext,
+                onTogglePiecesSync = onTogglePiecesSync
             )
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -38,7 +38,8 @@ class GeminiNanoWorkstreamReporter(
         packageName: String,
         appLabel: String,
         ephemeralText: String,
-        proxyUrl: String?
+        proxyUrl: String?,
+        proxyToken: String? = null
     ): WorkstreamAction? = withContext(Dispatchers.IO) {
         if (contextGuard.isBlocked(packageName)) return@withContext null
         if (ephemeralText.isBlank() || ephemeralText.length < 20) return@withContext null
@@ -79,7 +80,7 @@ class GeminiNanoWorkstreamReporter(
             )
 
             if (!proxyUrl.isNullOrBlank()) {
-                dispatchToProxy(result, proxyUrl)
+                dispatchToProxy(result, proxyUrl, proxyToken)
             }
 
             result
@@ -88,7 +89,7 @@ class GeminiNanoWorkstreamReporter(
         }
     }
 
-    private fun dispatchToProxy(action: WorkstreamAction, proxyUrl: String) {
+    private fun dispatchToProxy(action: WorkstreamAction, proxyUrl: String, proxyToken: String? = null) {
         try {
             val df = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
             df.timeZone = TimeZone.getTimeZone("UTC")
@@ -110,9 +111,21 @@ class GeminiNanoWorkstreamReporter(
             }
 
             val target = if (proxyUrl.endsWith("/")) "${proxyUrl}mobile/usage-report" else "$proxyUrl/mobile/usage-report"
-            val conn = URL(target).openConnection() as HttpURLConnection
+            val url = URL(target)
+            val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.setRequestProperty("Content-Type", "application/json")
+            if (!proxyToken.isNullOrBlank()) {
+                // Only attach the bearer token over HTTPS or to a loopback host —
+                // never send a credential in cleartext to a remote proxy.
+                val host = url.host
+                val isLoopback = host == "127.0.0.1" || host == "localhost" || host == "::1"
+                if (url.protocol.equals("https", ignoreCase = true) || isLoopback) {
+                    conn.setRequestProperty("Authorization", "Bearer $proxyToken")
+                } else {
+                    return
+                }
+            }
             conn.connectTimeout = 3000
             conn.readTimeout = 3000
             conn.doOutput = true

@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
 
     private var isAccessibilityEnabled by mutableStateOf(false)
     private var isScreenContextEnabled by mutableStateOf(true)
+    private var isPiecesSyncEnabled by mutableStateOf(true)
     private var suggestions by mutableStateOf<List<WorkflowSuggestion>>(emptyList())
     private var workflows by mutableStateOf<List<NativeWorkflow>>(emptyList())
 
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     isAccessibilityEnabled = isAccessibilityEnabled,
                     isScreenContextEnabled = isScreenContextEnabled,
+                    isPiecesSyncEnabled = isPiecesSyncEnabled,
                     suggestions = suggestions,
                     workflows = workflows,
                     onToggleAccessibility = {
@@ -50,6 +52,10 @@ class MainActivity : ComponentActivity() {
                     },
                     onToggleScreenContext = { enabled ->
                         store.setScreenContextEnabled(enabled)
+                        refreshState()
+                    },
+                    onTogglePiecesSync = { enabled ->
+                        store.setPiecesSyncEnabled(enabled)
                         refreshState()
                     },
                     onApproveSuggestion = { id ->
@@ -116,6 +122,7 @@ class MainActivity : ComponentActivity() {
     private fun refreshState() {
         isAccessibilityEnabled = AccessibilitySettingsHelper.isAccessibilityServiceEnabled(this)
         isScreenContextEnabled = store.screenContextEnabled()
+        isPiecesSyncEnabled = store.piecesSyncEnabled()
         suggestions = store.suggestions()
         workflows = store.workflows()
     }

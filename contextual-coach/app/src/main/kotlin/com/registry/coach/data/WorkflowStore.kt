@@ -17,6 +17,8 @@ class WorkflowStore(context: Context) {
     fun setPiecesSyncEnabled(enabled:Boolean)=preferences.edit().putBoolean("pieces_sync_enabled",enabled).apply()
     fun piecesProxyUrl():String=preferences.getString("pieces_proxy_url","http://127.0.0.1:8787") ?: "http://127.0.0.1:8787"
     fun setPiecesProxyUrl(url:String)=preferences.edit().putString("pieces_proxy_url",url).apply()
+    fun piecesProxyToken():String=preferences.getString("pieces_proxy_token","") ?: ""
+    fun setPiecesProxyToken(token:String)=preferences.edit().putString("pieces_proxy_token",token).apply()
 
     @Synchronized fun upsertSuggestion(suggestion: WorkflowSuggestion) {
         if (rejectedIds().contains(suggestion.id) || workflows().any { it.id == suggestion.id }) return

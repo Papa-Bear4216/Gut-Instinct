@@ -79,7 +79,7 @@ class AccessibilityMonitor : AccessibilityService() {
         val ephemeral=if(store.screenContextEnabled()) (ephemeralSelection+" "+extractVisibleContext(rootInActiveWindow)).trim().take(1500) else ""
         ephemeralSelection=""
 
-        if(ephemeral.isNotBlank() && store.piecesSyncEnabled()) {
+        if(ephemeral.isNotBlank() && store.piecesSyncEnabled() && store.piecesProxyToken().isNotBlank()) {
             val targetPkg=packageName
             scope.launch {
                 val appLabel=try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(targetPkg,0)).toString() } catch (_:Exception) { targetPkg }
@@ -87,7 +87,8 @@ class AccessibilityMonitor : AccessibilityService() {
                     packageName=targetPkg,
                     appLabel=appLabel,
                     ephemeralText=ephemeral,
-                    proxyUrl=store.piecesProxyUrl()
+                    proxyUrl=store.piecesProxyUrl(),
+                    proxyToken=store.piecesProxyToken()
                 )
             }
         }
