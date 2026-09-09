@@ -30,9 +30,11 @@ class AccessibilityMonitor : AccessibilityService() {
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
     private val processed=mutableSetOf<String>()
     private var ephemeralSelection=""
+    private lateinit var workstreamReporter: com.registry.coach.ai.GeminiNanoWorkstreamReporter
 
     override fun onServiceConnected() {
         store=WorkflowStore(applicationContext);guard=ContextGuard(applicationContext);sync=FirebaseWorkflowSync(applicationContext);executor=WorkflowExecutor(applicationContext)
+        workstreamReporter=com.registry.coach.ai.GeminiNanoWorkstreamReporter(guard)
         val prefs=getSharedPreferences("secondguess_observer",MODE_PRIVATE)
         val saved=prefs.getString("events","[]") ?: "[]"
         try { events.addAll(json.decodeFromString<List<PatternEngine.Event>>(saved)) } catch (_:Exception) { }
@@ -73,13 +75,27 @@ class AccessibilityMonitor : AccessibilityService() {
                 .putString("transitions",json.encodeToString(snapshotTransitions))
                 .apply()
         }
+        // Screen context is extracted only after filtering, capped, passed to AICore, then discarded.
+        val ephemeral=if(store.screenContextEnabled()) (ephemeralSelection+" "+extractVisibleContext(rootInActiveWindow)).trim().take(1500) else ""
+        ephemeralSelection=""
+
+        if(ephemeral.isNotBlank() && store.piecesSyncEnabled()) {
+            val targetPkg=packageName
+            scope.launch {
+                val appLabel=try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(targetPkg,0)).toString() } catch (_:Exception) { targetPkg }
+                workstreamReporter.analyzeAndReport(
+                    packageName=targetPkg,
+                    appLabel=appLabel,
+                    ephemeralText=ephemeral,
+                    proxyUrl=store.piecesProxyUrl()
+                )
+            }
+        }
+
         engine.detect(snapshotEvents,snapshotTransitions).forEach { pattern ->
             val base=engine.suggestion(pattern)
             if(base.id in processed || store.rejectedIds().contains(base.id) || store.workflows().any { it.id==base.id } || store.suggestions().any { it.id==base.id }) return@forEach
             processed.add(base.id)
-            // Screen context is extracted only after filtering, capped, passed to AICore, then discarded.
-            val ephemeral=if(store.screenContextEnabled()) (ephemeralSelection+" "+extractVisibleContext(rootInActiveWindow)).trim().take(1500) else ""
-            ephemeralSelection=""
             scope.launch {
                 val suggestion=generator.enrich(base,pattern,ephemeral)
                 store.upsertSuggestion(suggestion)

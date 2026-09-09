@@ -13,6 +13,10 @@ class WorkflowStore(context: Context) {
     @Synchronized fun rejectedIds(): Set<String> = preferences.getStringSet("rejected", emptySet()) ?: emptySet()
     fun screenContextEnabled():Boolean=preferences.getBoolean("screen_context_enabled",true)
     fun setScreenContextEnabled(enabled:Boolean)=preferences.edit().putBoolean("screen_context_enabled",enabled).apply()
+    fun piecesSyncEnabled():Boolean=preferences.getBoolean("pieces_sync_enabled",true)
+    fun setPiecesSyncEnabled(enabled:Boolean)=preferences.edit().putBoolean("pieces_sync_enabled",enabled).apply()
+    fun piecesProxyUrl():String=preferences.getString("pieces_proxy_url","http://127.0.0.1:8787") ?: "http://127.0.0.1:8787"
+    fun setPiecesProxyUrl(url:String)=preferences.edit().putString("pieces_proxy_url",url).apply()
 
     @Synchronized fun upsertSuggestion(suggestion: WorkflowSuggestion) {
         if (rejectedIds().contains(suggestion.id) || workflows().any { it.id == suggestion.id }) return
