@@ -53,7 +53,10 @@ class AccessibilityMonitor : AccessibilityService() {
         }
         events.addLast(PatternEngine.Event(packageName,now))
         while(events.size>200) events.removeFirst()
-        getSharedPreferences("secondguess_observer",MODE_PRIVATE).edit().putString("events",json.encodeToString(events.toList())).apply()
+        val snapshot=events.toList()
+        scope.launch(Dispatchers.IO) {
+            getSharedPreferences("secondguess_observer",MODE_PRIVATE).edit().putString("events",json.encodeToString(snapshot)).apply()
+        }
         engine.detect(events.toList()).forEach { pattern ->
             val base=engine.suggestion(pattern)
             if(base.id in processed || store.rejectedIds().contains(base.id) || store.workflows().any { it.id==base.id }) return@forEach

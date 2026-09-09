@@ -4,7 +4,26 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Outer subtle orbit loop -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,30 L74,74 L34,74 Z" />
+        android:strokeColor="#7C68EE"
+        android:strokeWidth="2.5"
+        android:strokeAlpha="0.6"
+        android:pathData="M34,54 A20,20 0 1,1 74,54" />
+    <path
+        android:strokeColor="#00E5A3"
+        android:strokeWidth="2.5"
+        android:pathData="M74,54 A20,20 0 0,1 34,54" />
+    <!-- Dynamic Arrow Head on the workflow loop -->
+    <path
+        android:fillColor="#00E5A3"
+        android:pathData="M34,50 L38,58 L30,58 Z" />
+    <!-- Center Gemini Nano 4-point AI Star / Spark -->
+    <path
+        android:fillColor="#00E5A3"
+        android:pathData="M54,34 Q54,48 40,54 Q54,54 54,68 Q54,54 68,54 Q54,54 54,34 Z" />
+    <!-- Secondary spark -->
+    <path
+        android:fillColor="#9D8CFF"
+        android:pathData="M70,36 Q70,41 65,43 Q70,43 70,48 Q70,43 75,43 Q70,43 70,36 Z" />
 </vector>

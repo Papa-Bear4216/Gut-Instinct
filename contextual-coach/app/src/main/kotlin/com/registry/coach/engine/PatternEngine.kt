@@ -36,6 +36,6 @@ class PatternEngine {
     companion object {
         const val MIN_EVIDENCE=3
         const val MAX_GAP_MS=90_000L
-        private val SENSITIVE=listOf(Regex("bank",RegexOption.IGNORE_CASE),Regex("wallet",RegexOption.IGNORE_CASE),Regex("password",RegexOption.IGNORE_CASE),Regex("authenticator",RegexOption.IGNORE_CASE),Regex("com\\.android\\.settings"))
+        private val SENSITIVE=listOf(Regex("bank",RegexOption.IGNORE_CASE),Regex("wallet",RegexOption.IGNORE_CASE),Regex("password",RegexOption.IGNORE_CASE),Regex("authenticator",RegexOption.IGNORE_CASE),Regex("medical",RegexOption.IGNORE_CASE),Regex("health",RegexOption.IGNORE_CASE),Regex("com\\.android\\.settings"))
     }
 }
