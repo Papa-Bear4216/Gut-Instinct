@@ -42,11 +42,17 @@ class SpecificationVerificationTest {
     @Test
     fun `rule 6 - sensitive package filter blocks before tree access`() {
         val sensitiveEvents = listOf(
-            PatternEngine.Event("com.chase.bank", 0),
-            PatternEngine.Event("com.google.android.apps.walletnfcrel", 10_000),
-            PatternEngine.Event("com.1password.android", 20_000),
-            PatternEngine.Event("com.google.android.apps.authenticator2", 30_000),
-            PatternEngine.Event("com.android.settings", 40_000)
+            PatternEngine.Event("com.chase.sig.android", 0),
+            PatternEngine.Event("com.wf.wellsfargomobile", 5_000),
+            PatternEngine.Event("org.toshi", 10_000),
+            PatternEngine.Event("com.sofi.mobile", 15_000),
+            PatternEngine.Event("com.fidelity.android", 20_000),
+            PatternEngine.Event("epic.mychart.android", 25_000),
+            PatternEngine.Event("com.cvs.rx", 30_000),
+            PatternEngine.Event("com.google.android.apps.walletnfcrel", 35_000),
+            PatternEngine.Event("com.onepassword.android", 40_000),
+            PatternEngine.Event("com.google.android.apps.authenticator2", 45_000),
+            PatternEngine.Event("com.android.settings", 50_000)
         )
         for (event in sensitiveEvents) {
             assertTrue(

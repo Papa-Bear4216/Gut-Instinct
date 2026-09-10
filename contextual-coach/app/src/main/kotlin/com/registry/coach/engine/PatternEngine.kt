@@ -2,6 +2,7 @@ package com.registry.coach.engine
 
 import com.registry.coach.data.WorkflowAction
 import com.registry.coach.data.WorkflowSuggestion
+import com.registry.coach.filter.ContextGuard
 import kotlin.math.min
 import kotlinx.serialization.Serializable
 
@@ -34,7 +35,7 @@ class PatternEngine {
     )
 
     fun isSensitive(packageName: String): Boolean =
-        SENSITIVE.any { it.containsMatchIn(packageName) }
+        ContextGuard.isSensitivePackage(packageName)
 
     fun isTrampolineOrNoise(packageName: String): Boolean {
         if (packageName.isBlank()) return true
@@ -295,16 +296,6 @@ class PatternEngine {
         val TRAMPOLINE_PATTERNS = listOf(
             Regex("""(^|\.)(?:launcher\d?|nexuslauncher|systemui|honeyboard|swiftkey)($|\.)""", RegexOption.IGNORE_CASE),
             Regex("""(^|\.)inputmethod(\.|\$)""", RegexOption.IGNORE_CASE)
-        )
-
-        private val SENSITIVE = listOf(
-            Regex("bank", RegexOption.IGNORE_CASE),
-            Regex("wallet", RegexOption.IGNORE_CASE),
-            Regex("password", RegexOption.IGNORE_CASE),
-            Regex("authenticator", RegexOption.IGNORE_CASE),
-            Regex("medical", RegexOption.IGNORE_CASE),
-            Regex("health", RegexOption.IGNORE_CASE),
-            Regex("com\\.android\\.settings")
         )
     }
 }

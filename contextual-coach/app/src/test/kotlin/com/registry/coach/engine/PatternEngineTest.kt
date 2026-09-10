@@ -18,6 +18,15 @@ class PatternEngineTest {
         assertTrue(engine.detect(events).isEmpty())
     }
 
+    @Test fun `filters real sensitive package IDs without generic keywords`() {
+        val events = listOf(
+            event("mail.app", 0), event("com.wf.wellsfargomobile", 10),
+            event("mail.app", 200), event("org.toshi", 210),
+            event("mail.app", 400), event("com.sofi.mobile", 410)
+        )
+        assertTrue(engine.detect(events).isEmpty())
+    }
+
     @Test fun `trampoline filter ignores launcher and keyboards between transitions`() {
         val events = listOf(
             event("com.whatsapp", 0),
