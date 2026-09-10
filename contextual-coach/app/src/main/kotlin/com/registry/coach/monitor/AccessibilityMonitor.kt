@@ -29,6 +29,11 @@ class AccessibilityMonitor : AccessibilityService() {
     private val transitions=ArrayDeque<PatternEngine.TransitionRecord>()
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
     private val processed=mutableSetOf<String>()
+    // Workflow ids currently executing. onAccessibilityEvent runs on the main thread,
+    // so checking + adding here synchronously (before scope.launch) prevents a second
+    // WINDOW_STATE_CHANGED within the ~30s execution window from double-triggering the
+    // same workflow while recordRun()'s lastRunAt write is still in flight.
+    private val inFlight=mutableSetOf<String>()
     private var ephemeralSelection=""
     private lateinit var workstreamReporter: com.registry.coach.ai.GeminiNanoWorkstreamReporter
 
@@ -54,8 +59,15 @@ class AccessibilityMonitor : AccessibilityService() {
         }
         if(event.eventType!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || events.lastOrNull()?.packageName==packageName) return
         val now=System.currentTimeMillis()
-        store.workflows().filter { it.enabled && it.fromPackage==packageName && now-it.lastRunAt>=it.cooldownMs }.forEach { workflow ->
-            scope.launch { val success=executor.execute(workflow);store.recordRun(workflow.id,success);val updated=store.workflows().firstOrNull { it.id==workflow.id } ?: workflow;sync.workflow(updated);sync.execution(updated,success) }
+        store.workflows().filter { it.enabled && it.fromPackage==packageName && now-it.lastRunAt>=it.cooldownMs && it.id !in inFlight }.forEach { workflow ->
+            inFlight.add(workflow.id)
+            scope.launch {
+                try {
+                    val success=executor.execute(workflow);store.recordRun(workflow.id,success);val updated=store.workflows().firstOrNull { it.id==workflow.id } ?: workflow;sync.workflow(updated);sync.execution(updated,success)
+                } finally {
+                    inFlight.remove(workflow.id)
+                }
+            }
         }
         val lastEvent=events.lastOrNull()
         if(lastEvent!=null && lastEvent.packageName!=packageName) {
