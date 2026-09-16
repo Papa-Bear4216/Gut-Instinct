@@ -7,8 +7,10 @@ import com.registry.coach.ai.OnDeviceWorkflowGenerator
 import com.registry.coach.data.WorkflowStore
 import com.registry.coach.engine.PatternEngine
 import com.registry.coach.filter.ContextGuard
+import android.util.Log
 import com.registry.coach.execution.WorkflowExecutor
 import com.registry.coach.sync.FirebaseWorkflowSync
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,7 +29,10 @@ class AccessibilityMonitor : AccessibilityService() {
     private val json=Json
     private val events=ArrayDeque<PatternEngine.Event>()
     private val transitions=ArrayDeque<PatternEngine.TransitionRecord>()
-    private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main)
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e("AccessibilityMonitor", "Caught unhandled coroutine exception in accessibility monitor", throwable)
+    }
+    private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main+exceptionHandler)
     private val processed=mutableSetOf<String>()
     // Workflow ids currently executing. onAccessibilityEvent runs on the main thread,
     // so checking + adding here synchronously (before scope.launch) prevents a second
@@ -64,6 +69,8 @@ class AccessibilityMonitor : AccessibilityService() {
             scope.launch {
                 try {
                     val success=executor.execute(workflow);store.recordRun(workflow.id,success);val updated=store.workflows().firstOrNull { it.id==workflow.id } ?: workflow;sync.workflow(updated);sync.execution(updated,success)
+                } catch (e: Throwable) {
+                    Log.w("AccessibilityMonitor", "Failed during workflow execution or sync", e)
                 } finally {
                     inFlight.remove(workflow.id)
                 }
@@ -94,14 +101,18 @@ class AccessibilityMonitor : AccessibilityService() {
         if(ephemeral.isNotBlank() && store.piecesSyncEnabled() && store.piecesProxyToken().isNotBlank()) {
             val targetPkg=packageName
             scope.launch {
-                val appLabel=try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(targetPkg,0)).toString() } catch (_:Exception) { targetPkg }
-                workstreamReporter.analyzeAndReport(
-                    packageName=targetPkg,
-                    appLabel=appLabel,
-                    ephemeralText=ephemeral,
-                    proxyUrl=store.piecesProxyUrl(),
-                    proxyToken=store.piecesProxyToken()
-                )
+                try {
+                    val appLabel=try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(targetPkg,0)).toString() } catch (_:Exception) { targetPkg }
+                    workstreamReporter.analyzeAndReport(
+                        packageName=targetPkg,
+                        appLabel=appLabel,
+                        ephemeralText=ephemeral,
+                        proxyUrl=store.piecesProxyUrl(),
+                        proxyToken=store.piecesProxyToken()
+                    )
+                } catch (e: Throwable) {
+                    Log.w("AccessibilityMonitor", "Workstream reporter failed", e)
+                }
             }
         }
 
@@ -110,9 +121,13 @@ class AccessibilityMonitor : AccessibilityService() {
             if(base.id in processed || store.rejectedIds().contains(base.id) || store.workflows().any { it.id==base.id } || store.suggestions().any { it.id==base.id }) return@forEach
             processed.add(base.id)
             scope.launch {
-                val suggestion=generator.enrich(base,pattern,ephemeral)
-                store.upsertSuggestion(suggestion)
-                sync.suggestion(suggestion)
+                try {
+                    val suggestion=generator.enrich(base,pattern,ephemeral)
+                    store.upsertSuggestion(suggestion)
+                    sync.suggestion(suggestion)
+                } catch (e: Throwable) {
+                    Log.w("AccessibilityMonitor", "Failed to enrich or sync suggestion", e)
+                }
             }
         }
     }
