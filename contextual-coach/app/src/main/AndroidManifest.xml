@@ -38,5 +38,6 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-    </application>
+        <service android:name=".ui.NudgeOverlayService" android:exported="false" />
+</application>
 </manifest>

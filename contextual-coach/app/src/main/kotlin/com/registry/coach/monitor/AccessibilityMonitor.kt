@@ -18,6 +18,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import android.content.Intent
+import com.registry.coach.ui.NudgeOverlayService
 
 class AccessibilityMonitor : AccessibilityService() {
     private lateinit var store:WorkflowStore
@@ -120,6 +122,17 @@ class AccessibilityMonitor : AccessibilityService() {
             val base=engine.suggestion(pattern)
             if(base.id in processed || store.rejectedIds().contains(base.id) || store.workflows().any { it.id==base.id } || store.suggestions().any { it.id==base.id }) return@forEach
             processed.add(base.id)
+            if (pattern.count == PatternEngine.MIN_EVIDENCE) {
+                // Store the unenriched suggestion synchronously so the nudge's
+                // "Automate" tap can approve it immediately — enrich() below
+                // only polishes title/reason text over the network/model call
+                // and would race the auto-dismissing overlay if awaited here.
+                store.upsertSuggestion(base)
+                NudgeOverlayService.currentSuggestionId = base.id
+                NudgeOverlayService.currentSuggestionTitle = base.title
+                val intent = Intent(this, NudgeOverlayService::class.java)
+                startService(intent)
+            }
             scope.launch {
                 try {
                     val suggestion=generator.enrich(base,pattern,ephemeral)
